@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Моё резюме</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+
+  <!-- ПРОФИЛЬ -->
+  <section class="profile card" id="profile">
+    <div class="profile-photo-wrap">
+      <div class="avatar-click" id="avatarClick" onclick="handleAvatarClick()" title="Нажми чтобы загрузить фото">
+        <img id="photo" src="" alt="Фото" onerror="this.style.display='none'">
+        <div class="photo-placeholder" id="photoPlaceholder">
+          <span>📷</span>
+          <small>Фото</small>
+        </div>
+        <div class="avatar-overlay" id="avatarOverlay">✕</div>
+      </div>
+      <input type="file" id="photoFile" accept="image/*" hidden>
+    </div>
+    <div class="profile-info">
+      <h1 class="editable" id="name" data-placeholder="Ваше ФИО" contenteditable="true"></h1>
+      <p class="editable subtitle" id="title" data-placeholder="Должность / специализация" contenteditable="true"></p>
+      <div class="contacts-row" id="contactsRow"></div>
+      <button class="btn-small no-print" onclick="addContact()">+ Контакт</button>
+    </div>
+  </section>
+
+  <!-- ОБЩИЙ ПРОГРЕСС -->
+  <section class="card progress-card">
+    <div class="progress-header">
+      <span>Общий прогресс навыков</span>
+      <span id="totalLabel">0 / 0</span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="totalBar"></div>
+    </div>
+  </section>
+
+  <!-- ОБО МНЕ -->
+  <section class="card collapsible-section" id="aboutSection">
+    <div class="section-header" onclick="toggleSection('aboutSection')">
+      <h2>Обо мне</h2>
+      <span class="section-toggle no-print">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="editable about-text" id="about" data-placeholder="Напиши 2–3 предложения о себе..." contenteditable="true"></div>
+    </div>
+  </section>
+
+  <!-- ОБРАЗОВАНИЕ / КУРСЫ -->
+  <section class="card collapsible-section" id="eduSection">
+    <div class="section-header" onclick="toggleSection('eduSection')">
+      <h2>Образование / Курсы</h2>
+      <div class="section-header-right">
+        <button class="btn-small no-print" onclick="event.stopPropagation();addEdu()">+ Добавить</button>
+        <span class="section-toggle no-print">▼</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div id="eduList"></div>
+    </div>
+  </section>
+
+  <!-- СЕРТИФИКАТЫ -->
+  <section class="card collapsible-section" id="certsSection">
+    <div class="section-header" onclick="toggleSection('certsSection')">
+      <h2>Сертификаты</h2>
+      <div class="section-header-right">
+        <button class="btn-small no-print" onclick="event.stopPropagation();addCert()">+ Добавить</button>
+        <span class="section-toggle no-print">▼</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div id="certsList"></div>
+    </div>
+  </section>
+
+  <!-- ПРОЕКТЫ/ОПЫТ -->
+  <section class="card collapsible-section" id="projectsSection">
+    <div class="section-header" onclick="toggleSection('projectsSection')">
+      <h2>Проекты / Опыт</h2>
+      <div class="section-header-right">
+        <button class="btn-small no-print" onclick="event.stopPropagation();addProject()">+ Добавить</button>
+        <span class="section-toggle no-print">▼</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div id="projectsList"></div>
+    </div>
+  </section>
+
+  <!-- КАСТОМНЫЕ БЛОКИ -->
+  <div id="customSectionsContainer"></div>
+
+  <!-- НАВЫКИ -->
+  <section class="card" id="skillsSection">
+    <div class="section-header">
+      <h2>Навыки</h2>
+      <div class="skills-toolbar no-print">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="skillSearch" placeholder="Поиск навыка..." oninput="onSearch(this.value)">
+          <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none">✕</button>
+        </div>
+        <button class="btn-small" onclick="addCategory()">+ Раздел</button>
+      </div>
+    </div>
+    <div id="categoriesList"></div>
+  </section>
+
+  <!-- БОКОВОЕ МЕНЮ -->
+  <nav class="sidebar no-print">
+    <button class="sb-btn" onclick="openTemplateModal()" title="Шаблон карьеры">🎯<span>Шаблон</span></button>
+    <button class="sb-btn" onclick="addCustomSection()" title="Свой блок">＋<span>Свой блок</span></button>
+    <div class="sb-divider"></div>
+    <button class="sb-btn" onclick="exportJSON()" title="Сохранить JSON">💾<span>Сохранить</span></button>
+    <button class="sb-btn" onclick="importJSON()" title="Загрузить JSON">📂<span>Загрузить</span></button>
+    <div class="sb-divider"></div>
+    <button class="sb-btn" onclick="openPrintModal()" title="Экспорт в PDF">🖨<span>PDF</span></button>
+    <button class="sb-btn theme-sb" onclick="toggleTheme()" id="themeSbBtn">🌙<span>Тема</span></button>
+  </nav>
+
+  <!-- PDF MODAL -->
+  <div id="printModal" class="modal-overlay" onclick="if(event.target===this)closePrintModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Настройки PDF</h3>
+        <button class="btn-icon" onclick="closePrintModal()">✕</button>
+      </div>
+      <p class="modal-hint">Выбери что включить в распечатку</p>
+      <div class="print-options">
+        <label class="print-opt"><input type="radio" name="printFilter" value="all" checked> Все навыки</label>
+        <label class="print-opt"><input type="radio" name="printFilter" value="done"> Только освоенные ✓</label>
+        <label class="print-opt"><input type="radio" name="printFilter" value="no-frozen"> Все кроме замороженных ❄</label>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:20px">
+        <button class="btn-primary" onclick="doPrint()">Печатать / Сохранить PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="templateModal" class="modal-overlay" onclick="if(event.target===this)closeTemplateModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Выбери цель карьеры</h3>
+        <button class="btn-icon" onclick="closeTemplateModal()">✕</button>
+      </div>
+      <p class="modal-hint">Навыки добавятся в твоё резюме как "в планах". Уже существующие не дублируются.</p>
+      <div class="template-grid">
+        <div class="template-card" onclick="applyTemplate('Пентестер')">
+          <div class="tpl-icon">🔓</div>
+          <div class="tpl-name">Пентестер</div>
+          <div class="tpl-desc">Kali Linux, Metasploit, Burp Suite, OWASP Top 10, сети, криптография, Bug Bounty</div>
+        </div>
+        <div class="template-card" onclick="applyTemplate('ИБ-специалист')">
+          <div class="tpl-icon">🛡️</div>
+          <div class="tpl-name">ИБ-специалист</div>
+          <div class="tpl-desc">ViPNet, Dallas Lock, SIEM, DFIR, ФСТЭК, ФЗ-152, КИИ, нормативная база РФ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
