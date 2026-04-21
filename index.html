@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ИБ База знаний</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e0e0e0; min-height: 100vh; }
+header { background: #1a1d27; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a2d3a; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 8px; }
+header h1 { font-size: 1.2rem; color: #7c8cf8; letter-spacing: 1px; }
+.header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.search-box { background: #252836; border: 1px solid #3a3d4a; border-radius: 8px; padding: 6px 12px; color: #e0e0e0; font-size: 0.9rem; width: 180px; outline: none; }
+.search-box:focus { border-color: #7c8cf8; }
+.btn-export { background: #252836; border: 1px solid #3a3d4a; border-radius: 8px; padding: 6px 12px; color: #aaa; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; }
+.btn-export:hover { border-color: #7c8cf8; color: #7c8cf8; }
+.container { max-width: 900px; margin: 0 auto; padding: 20px 16px; }
+.top-actions { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.add-section-btn { display: flex; align-items: center; gap: 8px; background: #7c8cf8; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; }
+.add-section-btn:hover { background: #6370e0; }
+.section-card { background: #1a1d27; border-radius: 14px; margin-bottom: 16px; border: 1px solid #2a2d3a; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; user-select: none; }
+.section-header:hover { background: #1f2235; }
+.chevron { transition: transform 0.2s; font-size: 0.8rem; color: #7c8cf8; }
+.chevron.open { transform: rotate(90deg); }
+.section-title { font-size: 1.05rem; font-weight: 600; flex: 1; color: #c0c8ff; }
+.section-progress { font-size: 0.78rem; color: #888; margin-right: 8px; }
+.icon-btn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 4px; border-radius: 6px; transition: background 0.15s; color: #888; }
+.icon-btn:hover { background: #2a2d3a; color: #e0e0e0; }
+.section-body { padding: 0 16px 16px; display: none; }
+.section-body.open { display: block; }
+.subsection { background: #252836; border-radius: 10px; margin-bottom: 10px; border: 1px solid #2a2d3a; }
+.subsection-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; cursor: pointer; }
+.subsection-header:hover { background: #2a2d3a; border-radius: 10px; }
+.subsection-title { font-size: 0.95rem; font-weight: 500; flex: 1; color: #a0aacc; }
+.progress-bar-wrap { height: 4px; background: #1a1d27; border-radius: 2px; margin: 0 14px 10px; }
+.progress-bar { height: 4px; border-radius: 2px; background: #7c8cf8; transition: width 0.3s; }
+.skills-list { padding: 0 14px 10px; display: none; }
+.skills-list.open { display: block; }
+.skill-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; background: #1a1d27; border: 1px solid #2a2d3a; transition: border-color 0.2s; }
+.skill-item:hover { border-color: #3a3d5a; }
+.skill-move { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
+.move-btn { font-size: 0.65rem; padding: 2px 4px; line-height: 1; color: #555; }
+.move-btn:hover:not([disabled]) { color: #7c8cf8; background: #2a2d3a; }
+.move-btn[disabled] { opacity: 0.2; cursor: default; }
+.skill-color { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; cursor: pointer; border: 2px solid #3a3d4a; }
+.skill-main { flex: 1; min-width: 0; }
+.skill-name input { background: transparent; border: none; border-bottom: 1px dashed #444; color: #dde; font-size: 0.9rem; font-weight: 500; outline: none; width: 100%; }
+.skill-note textarea { background: #252836; border: 1px solid #3a3d4a; border-radius: 6px; color: #aaa; font-size: 0.78rem; outline: none; width: 100%; resize: none; padding: 4px 6px; font-family: inherit; min-height: 28px; overflow: hidden; margin-top: 4px; line-height: 1.5; }
+.skill-status { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.status-badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 20px; cursor: pointer; border: none; font-weight: 600; letter-spacing: 0.3px; white-space: nowrap; }
+.status-0 { background: #2a2d3a; color: #888; }
+.status-1 { background: #2a3a2a; color: #6dbf6d; }
+.status-2 { background: #3a2a1a; color: #e0a060; }
+.add-skill-btn { display: flex; align-items: center; gap: 6px; background: none; border: 1px dashed #3a3d4a; border-radius: 8px; padding: 6px 12px; color: #666; font-size: 0.82rem; cursor: pointer; margin: 4px 14px 10px; transition: all 0.2s; width: calc(100% - 28px); }
+.add-skill-btn:hover { border-color: #7c8cf8; color: #7c8cf8; }
+.add-sub-btn { display: flex; align-items: center; gap: 6px; background: none; border: 1px dashed #3a3d4a; border-radius: 8px; padding: 7px 12px; color: #666; font-size: 0.85rem; cursor: pointer; margin-top: 6px; transition: all 0.2s; width: 100%; }
+.add-sub-btn:hover { border-color: #7c8cf8; color: #7c8cf8; }
+.color-picker-popup { position: absolute; background: #252836; border: 1px solid #3a3d4a; border-radius: 10px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; z-index: 200; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.color-dot { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; }
+.color-dot:hover { border-color: #fff; }
+.stats-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat-chip { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 8px 14px; font-size: 0.82rem; color: #888; }
+.stat-chip span { color: #7c8cf8; font-weight: 700; font-size: 1rem; }
+@media (max-width: 600px) {
+  header h1 { font-size: 1rem; }
+  .search-box { width: 120px; }
+  .skill-item { flex-wrap: wrap; }
+  .stats-bar { gap: 8px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛡 ИБ База знаний</h1>
+  <div class="header-right">
+    <input class="search-box" id="searchInput" placeholder="🔍 Поиск..." oninput="renderAll()">
+    <button class="btn-export" onclick="exportJSON()">⬇ Экспорт</button>
+    <button class="btn-export" onclick="document.getElementById('importFile').click()">⬆ Импорт</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+  </div>
+</header>
+<div class="container">
+  <div class="stats-bar" id="statsBar"></div>
+  <div class="top-actions">
+    <button class="add-section-btn" onclick="addSection()">＋ Добавить раздел</button>
+  </div>
+  <div id="app"></div>
+</div>
+<div id="colorPickerPopup" class="color-picker-popup" style="display:none"></div>
+
+<script>
+const COLORS = ['#7c8cf8','#6dbf6d','#e07070','#e0a060','#60c0e0','#c060e0','#e0d060','#888','#ff8fab','#00b4d8'];
+const STATUS_LABELS = ['не изучал','изучил','в процессе'];
+const STATUS_CLASS = ['status-0','status-1','status-2'];
+let data = [];
+let activeColorTarget = null;
+
+function save() { localStorage.setItem('ib_data', JSON.stringify(data)); }
+function load() {
+  const raw = localStorage.getItem('ib_data');
+  if (raw) { data = JSON.parse(raw); return; }
+  data = getDefaultData(); save();
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ib_knowledge_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+function importJSON(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      data = JSON.parse(ev.target.result); save(); renderAll();
+    } catch { alert('Ошибка: неверный формат файла'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function autoResize(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+function uid() { return Math.random().toString(36).slice(2,10); }
+function calcProgress(skills) {
+  if (!skills.length) return 0;
+  return Math.round(skills.filter(s => s.status === 1).length / skills.length * 100);
+}
+function totalStats() {
+  let total = 0, done = 0, inprog = 0;
+  data.forEach(sec => sec.subs.forEach(sub => sub.skills.forEach(sk => {
+    total++; if(sk.status===1) done++; if(sk.status===2) inprog++;
+  })));
+  return { total, done, inprog };
+}
+function renderStats() {
+  const { total, done, inprog } = totalStats();
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-chip">Всего: <span>${total}</span></div>
+    <div class="stat-chip">Изучил: <span>${done}</span></div>
+    <div class="stat-chip">В процессе: <span>${inprog}</span></div>
+    <div class="stat-chip">Прогресс: <span>${total ? Math.round(done/total*100) : 0}%</span></div>
+  `;
+}
+function getSearch() { return document.getElementById('searchInput').value.toLowerCase().trim(); }
+function skillMatchesSearch(sk, q) { return sk.name.toLowerCase().includes(q) || sk.note.toLowerCase().includes(q); }
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderAll() {
+  renderStats();
+  const q = getSearch();
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  data.forEach((sec, si) => {
+    const filteredSubs = sec.subs.map(sub => ({
+      ...sub, skills: q ? sub.skills.filter(sk => skillMatchesSearch(sk, q)) : sub.skills
+    })).filter(sub => !q || sub.skills.length);
+    if (q && !filteredSubs.length) return;
+    const secEl = document.createElement('div');
+    secEl.className = 'section-card';
+    const prog = calcProgress(sec.subs.flatMap(s=>s.skills));
+    secEl.innerHTML = `
+      <div class="section-header" onclick="toggleSection(${si})">
+        <span class="chevron ${sec.open||q?'open':''}">▶</span>
+        <span class="section-title" id="stitle-${si}" onclick="event.stopPropagation()">${escHtml(sec.title)}</span>
+        <span class="section-progress">${prog}%</span>
+        <button class="icon-btn" title="Переименовать" onclick="event.stopPropagation();editSectionTitle(${si})">✏️</button>
+        <button class="icon-btn" title="Удалить" onclick="event.stopPropagation();deleteSection(${si})">🗑</button>
+      </div>
+      <div class="section-body ${sec.open||q?'open':''}" id="sbody-${si}"></div>
+    `;
+    app.appendChild(secEl);
+    const body = secEl.querySelector(`#sbody-${si}`);
+    filteredSubs.forEach(sub => {
+      const realSubi = sec.subs.findIndex(s=>s.id===sub.id);
+      body.appendChild(renderSubsection(si, realSubi, sub, q));
+    });
+    const btn = document.createElement('button');
+    btn.className = 'add-sub-btn'; btn.innerHTML = '＋ Добавить подраздел';
+    btn.onclick = () => addSubsection(si); body.appendChild(btn);
+  });
+  // auto-resize all textareas after render
+  document.querySelectorAll('.skill-note textarea').forEach(ta => autoResize(ta));
+}
+
+function renderSubsection(si, subi, sub, q) {
+  const prog = calcProgress(sub.skills);
+  const wrap = document.createElement('div');
+  wrap.className = 'subsection';
+  wrap.innerHTML = `
+    <div class="subsection-header" onclick="toggleSub(${si},${subi})">
+      <span class="chevron ${sub.open||q?'open':''}">▶</span>
+      <span class="subsection-title" id="subtitle-${si}-${subi}" onclick="event.stopPropagation()">${escHtml(sub.title)}</span>
+      <span class="section-progress">${prog}%</span>
+      <button class="icon-btn" title="Переименовать" onclick="event.stopPropagation();editSubTitle(${si},${subi})">✏️</button>
+      <button class="icon-btn" title="Удалить" onclick="event.stopPropagation();deleteSub(${si},${subi})">🗑</button>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar" style="width:${prog}%"></div></div>
+    <div class="skills-list ${sub.open||q?'open':''}" id="skills-${si}-${subi}"></div>
+    <button class="add-skill-btn" onclick="addSkill(${si},${subi})">＋ Добавить навык</button>
+  `;
+  const list = wrap.querySelector(`#skills-${si}-${subi}`);
+  sub.skills.forEach((sk, ski) => list.appendChild(renderSkill(si, subi, ski, sk)));
+  return wrap;
+}
+
+function renderSkill(si, subi, ski, sk) {
+  const total = data[si].subs[subi].skills.length;
+  const el = document.createElement('div');
+  el.className = 'skill-item';
+  el.innerHTML = `
+    <div class="skill-move">
+      <button class="icon-btn move-btn" onclick="moveSkill(${si},${subi},${ski},-1)" title="Вверх" ${ski===0?'disabled':''}>▲</button>
+      <button class="icon-btn move-btn" onclick="moveSkill(${si},${subi},${ski},1)" title="Вниз" ${ski===total-1?'disabled':''}>▼</button>
+    </div>
+    <div class="skill-color" style="background:${sk.color}" onclick="openColorPicker(event,${si},${subi},${ski})" title="Цвет"></div>
+    <div class="skill-main">
+      <div class="skill-name"><input value="${escHtml(sk.name)}" placeholder="Название навыка" onchange="updateSkillName(${si},${subi},${ski},this.value)"></div>
+      <div class="skill-note"><textarea placeholder="Заметка: что знаю об этом..." oninput="autoResize(this);updateSkillNote(${si},${subi},${ski},this.value)">${escHtml(sk.note)}</textarea></div>
+    </div>
+    <div class="skill-status">
+      <button class="status-badge ${STATUS_CLASS[sk.status]}" onclick="cycleStatus(${si},${subi},${ski})">${STATUS_LABELS[sk.status]}</button>
+      <button class="icon-btn" onclick="deleteSkill(${si},${subi},${ski})" title="Удалить">🗑</button>
+    </div>
+  `;
+  return el;
+}
+
+function moveSkill(si, subi, ski, dir) {
+  const skills = data[si].subs[subi].skills;
+  const newIdx = ski + dir;
+  if (newIdx < 0 || newIdx >= skills.length) return;
+  [skills[ski], skills[newIdx]] = [skills[newIdx], skills[ski]];
+  save(); renderAll();
+}
+
+function toggleSection(si) { data[si].open = !data[si].open; save(); renderAll(); }
+function toggleSub(si,subi) { data[si].subs[subi].open = !data[si].subs[subi].open; save(); renderAll(); }
+function addSection() { data.push({id:uid(),title:'Новый раздел',open:true,subs:[]}); save(); renderAll(); }
+function deleteSection(si) { if(confirm('Удалить раздел?')) { data.splice(si,1); save(); renderAll(); } }
+function editSectionTitle(si) {
+  const el = document.getElementById(`stitle-${si}`);
+  el.innerHTML = `<input value="${escHtml(data[si].title)}" onblur="saveSectionTitle(${si},this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="background:transparent;border:none;border-bottom:1px dashed #7c8cf8;color:#c0c8ff;font-size:1.05rem;font-weight:600;outline:none;width:100%">`;
+  el.querySelector('input').focus();
+}
+function saveSectionTitle(si,val) { data[si].title=val||'Раздел'; save(); renderAll(); }
+function addSubsection(si) { data[si].subs.push({id:uid(),title:'Новый подраздел',open:true,skills:[]}); data[si].open=true; save(); renderAll(); }
+function deleteSub(si,subi) { if(confirm('Удалить подраздел?')) { data[si].subs.splice(subi,1); save(); renderAll(); } }
+function editSubTitle(si,subi) {
+  const el = document.getElementById(`subtitle-${si}-${subi}`);
+  el.innerHTML = `<input value="${escHtml(data[si].subs[subi].title)}" onblur="saveSubTitle(${si},${subi},this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="background:transparent;border:none;border-bottom:1px dashed #555;color:#a0aacc;font-size:0.95rem;font-weight:500;outline:none;width:100%">`;
+  el.querySelector('input').focus();
+}
+function saveSubTitle(si,subi,val) { data[si].subs[subi].title=val||'Подраздел'; save(); renderAll(); }
+function addSkill(si,subi) { data[si].subs[subi].skills.push({id:uid(),name:'',note:'',status:0,color:'#7c8cf8'}); data[si].open=true; data[si].subs[subi].open=true; save(); renderAll(); }
+function deleteSkill(si,subi,ski) { data[si].subs[subi].skills.splice(ski,1); save(); renderAll(); }
+function updateSkillName(si,subi,ski,val) { data[si].subs[subi].skills[ski].name=val; save(); }
+function updateSkillNote(si,subi,ski,val) { data[si].subs[subi].skills[ski].note=val; save(); }
+function cycleStatus(si,subi,ski) { const sk=data[si].subs[subi].skills[ski]; sk.status=(sk.status+1)%3; save(); renderAll(); }
+function openColorPicker(e,si,subi,ski) {
+  e.stopPropagation(); activeColorTarget={si,subi,ski};
+  const popup=document.getElementById('colorPickerPopup');
+  popup.innerHTML=COLORS.map(c=>`<div class="color-dot" style="background:${c}" onclick="pickColor('${c}')"></div>`).join('');
+  popup.style.display='flex'; popup.style.left=(e.pageX-10)+'px'; popup.style.top=(e.pageY+10)+'px';
+}
+function pickColor(c) {
+  if(activeColorTarget){const{si,subi,ski}=activeColorTarget; data[si].subs[subi].skills[ski].color=c; save(); renderAll();}
+  document.getElementById('colorPickerPopup').style.display='none'; activeColorTarget=null;
+}
+document.addEventListener('click',()=>{ document.getElementById('colorPickerPopup').style.display='none'; activeColorTarget=null; });
+
+function getDefaultData() {
+  const s = (name, color='#7c8cf8') => ({id:uid(),name,note:'',status:0,color});
+  return [
+    {id:uid(),title:'Информационная безопасность',open:true,subs:[
+      {id:uid(),title:'Сети',open:true,skills:[
+        s('Модель OSI — 7 уровней, назначение каждого уровня','#7c8cf8'),
+        s('TCP/IP — 4 уровня, отличие от OSI, инкапсуляция','#7c8cf8'),
+        s('IPv4 — структура адреса, классы, маски подсети','#60c0e0'),
+        s('IPv6 — формат, зачем нужен, отличие от IPv4','#60c0e0'),
+        s('CIDR — бесклассовая адресация, /24 /16 /8','#60c0e0'),
+        s('NAT — Static, Dynamic, PAT (Masquerade), зачем нужен','#60c0e0'),
+        s('DHCP — процесс DORA, аренда адреса, опции','#60c0e0'),
+        s('DNS — A, AAAA, MX, CNAME, PTR записи; рекурсия vs итерация','#60c0e0'),
+        s('ARP — как работает, ARP-spoofing','#60c0e0'),
+        s('TCP vs UDP — отличия, handshake, use cases','#7c8cf8'),
+        s('Firewall — stateful vs stateless, правила, зоны','#e07070'),
+        s('VPN — IPSec (tunnel/transport), OpenVPN, WireGuard','#e07070'),
+        s('Proxy — forward/reverse proxy, MITM','#e07070'),
+        s('IDS/IPS — отличия, сигнатурный vs аномальный анализ','#e07070'),
+        s('VLAN — зачем нужен, тегирование 802.1Q','#888'),
+        s('Routing — статический, динамический (OSPF, BGP)','#888'),
+      ]},
+      {id:uid(),title:'Криптография',open:false,skills:[
+        s('Симметричное шифрование — AES (128/256), DES, 3DES','#c060e0'),
+        s('Асимметричное шифрование — RSA, ECC, принцип публичного ключа','#c060e0'),
+        s('Хэш-функции — MD5, SHA-1, SHA-256, SHA-3; коллизии','#c060e0'),
+        s('HMAC — что это, зачем, отличие от обычного хэша','#c060e0'),
+        s('PKI — сертификаты X.509, CA, цепочка доверия, CRL/OCSP','#c060e0'),
+        s('TLS/SSL — handshake, версии (1.0-1.3), уязвимости (POODLE, BEAST)','#c060e0'),
+        s('Цифровая подпись — принцип, невозможность отрицания','#c060e0'),
+        s('Режимы шифрования — ECB, CBC, GCM, CTR; IV/nonce','#c060e0'),
+        s('Стеганография — отличие от шифрования','#888'),
+      ]},
+      {id:uid(),title:'Атаки и уязвимости',open:false,skills:[
+        s('OWASP Top 10 (2021) — знать все 10 категорий','#e07070'),
+        s('SQL Injection — Error-based, Blind, Time-based; sqlmap','#e07070'),
+        s('XSS — Reflected, Stored, DOM-based; обход фильтров','#e07070'),
+        s('CSRF — принцип атаки, защита (токены, SameSite cookie)','#e07070'),
+        s('SSRF — Server-Side Request Forgery, внутренние сервисы','#e07070'),
+        s('XXE — XML External Entity, чтение файлов','#e07070'),
+        s('IDOR — Insecure Direct Object Reference','#e07070'),
+        s('Path Traversal — ../../../etc/passwd','#e07070'),
+        s('Command Injection — ; && | в параметрах','#e07070'),
+        s('Buffer Overflow — stack overflow, heap overflow, shellcode','#e07070'),
+        s('Race Condition — TOCTOU, примеры эксплуатации','#e0a060'),
+        s('Brute Force / Dictionary Attack — защита, rate limiting','#e0a060'),
+        s('Man-in-the-Middle — ARP spoofing, SSL stripping','#e0a060'),
+        s('DoS/DDoS — типы (volumetric, protocol, application)','#e0a060'),
+        s('Social Engineering — фишинг, вишинг, претекстинг','#e0a060'),
+        s('Pass-the-Hash — принцип, защита','#e07070'),
+        s('Privilege Escalation — вертикальная и горизонтальная','#e07070'),
+      ]},
+      {id:uid(),title:'Веб-безопасность',open:false,skills:[
+        s('HTTP — методы, заголовки, коды ответов (2xx/3xx/4xx/5xx)','#00b4d8'),
+        s('HTTPS — как работает, certificate pinning','#00b4d8'),
+        s('Cookie — флаги HttpOnly, Secure, SameSite','#00b4d8'),
+        s('CORS — политика, preflight, уязвимости','#00b4d8'),
+        s('CSP — Content Security Policy, директивы','#00b4d8'),
+        s('JWT — структура (header.payload.signature), атаки (alg:none)','#00b4d8'),
+        s('OAuth 2.0 — flows (Authorization Code, Implicit, Client Credentials)','#00b4d8'),
+        s('Session Management — session fixation, hijacking','#00b4d8'),
+        s('Clickjacking — X-Frame-Options, frame busting','#00b4d8'),
+      ]},
+      {id:uid(),title:'Операционные системы и Linux',open:false,skills:[
+        s('Linux — базовые команды (ls, grep, find, chmod, ps, netstat)','#6dbf6d'),
+        s('Права доступа Linux — rwx, SUID/SGID/Sticky bit','#6dbf6d'),
+        s('Процессы Linux — /proc, kill, signals','#6dbf6d'),
+        s('Логи Linux — /var/log, syslog, journalctl','#6dbf6d'),
+        s('Windows — реестр, SAM, NTLM, Active Directory основы','#6dbf6d'),
+        s('Active Directory — домен, DC, GPO, Kerberos','#6dbf6d'),
+        s('Kerberos — принцип, TGT, TGS, атаки (Kerberoasting, Pass-the-Ticket)','#6dbf6d'),
+      ]},
+      {id:uid(),title:'Инструменты ИБ',open:false,skills:[
+        s('Nmap — флаги (-sS, -sV, -O, -A), скрипты NSE','#6dbf6d'),
+        s('Wireshark — фильтры (tcp, http, ip.addr), анализ трафика','#6dbf6d'),
+        s('Metasploit — msfconsole, search/use/set/run, payloads, meterpreter','#6dbf6d'),
+        s('Burp Suite — Proxy, Repeater, Intruder, Scanner, Decoder','#6dbf6d'),
+        s('John the Ripper — режимы взлома, форматы хэшей','#6dbf6d'),
+        s('Hashcat — атаки (dictionary, brute, rule-based), GPU','#6dbf6d'),
+        s('Nikto — сканер веб-уязвимостей','#6dbf6d'),
+        s('Gobuster / ffuf — перебор директорий и поддоменов','#6dbf6d'),
+        s('SQLmap — автоматизация SQL-инъекций','#6dbf6d'),
+        s('Hydra / Medusa — брутфорс сервисов','#6dbf6d'),
+        s('Aircrack-ng — аудит Wi-Fi, WPA2 handshake','#6dbf6d'),
+        s('Volatility — анализ дампов памяти','#888'),
+        s('Autopsy / FTK — цифровая криминалистика','#888'),
+      ]},
+      {id:uid(),title:'Стандарты и compliance',open:false,skills:[
+        s('ISO 27001 — ISMS, требования, сертификация','#e0d060'),
+        s('GDPR — персональные данные, права субъектов, штрафы','#e0d060'),
+        s('PCI DSS — требования для платёжных систем','#e0d060'),
+        s('NIST Cybersecurity Framework — Identify/Protect/Detect/Respond/Recover','#e0d060'),
+        s('CVE / CVSS — что это, как читать оценку уязвимости','#e0d060'),
+        s('Pentest методологии — PTES, OWASP Testing Guide, OSSTMM','#e0d060'),
+      ]},
+    ]},
+    {id:uid(),title:'Тестирование ПО',open:false,subs:[
+      {id:uid(),title:'Теория тестирования',open:false,skills:[
+        s('Виды тестирования — функциональное vs нефункциональное','#7c8cf8'),
+        s('Уровни — unit, integration, system, acceptance (UAT)','#7c8cf8'),
+        s('Black / White / Grey box — отличия, когда применять','#7c8cf8'),
+        s('Статическое vs динамическое тестирование','#7c8cf8'),
+        s('Регрессионное тестирование — цель, когда запускать','#7c8cf8'),
+        s('Smoke vs Sanity — отличия, когда использовать','#7c8cf8'),
+        s('Exploratory testing — принцип, session-based','#7c8cf8'),
+        s('Тест-дизайн — эквивалентное разбиение, граничные значения','#7c8cf8'),
+        s('Decision table / State transition — техники тест-дизайна','#7c8cf8'),
+        s('Pairwise testing — комбинаторное тестирование','#7c8cf8'),
+      ]},
+      {id:uid(),title:'Документация',open:false,skills:[
+        s('Test Plan — структура, что включает','#e0a060'),
+        s('Test Case — шаги, ожидаемый результат, preconditions','#e0a060'),
+        s('Test Suite — группировка тест-кейсов','#e0a060'),
+        s('Bug Report — severity vs priority, шаги воспроизведения','#e0a060'),
+        s('Жизненный цикл бага — New/Open/In Progress/Fixed/Closed/Reopen','#e0a060'),
+        s('Checklists — когда использовать вместо тест-кейсов','#e0a060'),
+        s('RTM — матрица трассировки требований','#e0a060'),
+      ]},
+      {id:uid(),title:'API тестирование',open:false,skills:[
+        s('REST — методы (GET/POST/PUT/PATCH/DELETE), статус-коды','#00b4d8'),
+        s('HTTP заголовки — Content-Type, Authorization, Accept','#00b4d8'),
+        s('JSON — структура, валидация','#00b4d8'),
+        s('Postman — коллекции, переменные, assertions (pm.test)','#00b4d8'),
+        s('Swagger / OpenAPI — чтение документации, тестирование','#00b4d8'),
+        s('GraphQL — queries, mutations, отличие от REST','#00b4d8'),
+        s('Аутентификация API — Basic Auth, Bearer Token, API Key','#00b4d8'),
+        s('Негативное тестирование API — невалидные данные, граничные случаи','#00b4d8'),
+      ]},
+      {id:uid(),title:'Безопасность в тестировании',open:false,skills:[
+        s('OWASP Top 10 — знать с точки зрения тестировщика','#e07070'),
+        s('Тестирование аутентификации — brute force, lockout, MFA','#e07070'),
+        s('Тестирование авторизации — IDOR, privilege escalation','#e07070'),
+        s('Тестирование ввода — XSS, SQLi, валидация на клиенте/сервере','#e07070'),
+        s('Тестирование сессий — cookie flags, session fixation','#e07070'),
+        s('Burp Suite для тестировщика — перехват, изменение запросов','#e07070'),
+        s('OWASP ZAP — автоматическое сканирование','#e07070'),
+      ]},
+      {id:uid(),title:'Инструменты тестирования',open:false,skills:[
+        s('Postman — тестирование API, Newman для CI','#6dbf6d'),
+        s('Selenium WebDriver — локаторы (XPath, CSS), Page Object','#6dbf6d'),
+        s('Playwright / Cypress — современная автоматизация UI','#6dbf6d'),
+        s('Jira — создание задач, баг-репортов, фильтры JQL','#6dbf6d'),
+        s('TestRail / Zephyr — управление тест-кейсами','#6dbf6d'),
+        s('Charles Proxy / Fiddler — перехват и анализ трафика','#6dbf6d'),
+        s('DevTools браузера — Network, Console, Application вкладки','#6dbf6d'),
+        s('SQL — базовые запросы (SELECT, JOIN, WHERE) для проверки БД','#6dbf6d'),
+        s('Git — базовые команды для работы с репозиторием','#6dbf6d'),
+      ]},
+      {id:uid(),title:'Производительность и нагрузка',open:false,skills:[
+        s('Виды нагрузочного тестирования — load, stress, spike, soak','#ff8fab'),
+        s('JMeter — создание сценариев, thread groups, assertions','#ff8fab'),
+        s('k6 / Gatling — современные инструменты нагрузки','#ff8fab'),
+        s('Метрики — RPS, latency, throughput, error rate','#ff8fab'),
+      ]},
+    ]},
+    {id:uid(),title:'Общие IT навыки',open:false,subs:[
+      {id:uid(),title:'Сети и протоколы',open:false,skills:[
+        s('HTTP/HTTPS — полный цикл запроса от браузера до сервера','#7c8cf8'),
+        s('SSH — ключи, туннели, port forwarding','#7c8cf8'),
+        s('FTP/SFTP/SCP — отличия, безопасность','#7c8cf8'),
+        s('SMTP/IMAP/POP3 — почтовые протоколы','#7c8cf8'),
+        s('SNMP — мониторинг сети, версии, уязвимости','#888'),
+      ]},
+      {id:uid(),title:'Программирование',open:false,skills:[
+        s('Python — базовый синтаксис, скрипты для автоматизации','#6dbf6d'),
+        s('Bash — скрипты, pipe, grep, awk, sed','#6dbf6d'),
+        s('Регулярные выражения — базовые паттерны','#6dbf6d'),
+        s('SQL — SELECT, INSERT, UPDATE, DELETE, JOIN','#6dbf6d'),
+        s('JavaScript — основы, для понимания XSS/DOM атак','#e0d060'),
+      ]},
+      {id:uid(),title:'Виртуализация и контейнеры',open:false,skills:[
+        s('Docker — образы, контейнеры, Dockerfile, docker-compose','#00b4d8'),
+        s('Kubernetes — pods, services, namespaces (базово)','#00b4d8'),
+        s('VMware / VirtualBox — создание лабораторий','#00b4d8'),
+        s('Kali Linux — дистрибутив для ИБ, основные инструменты','#e07070'),
+      ]},
+    ]},
+  ];
+}
+
+load();
+renderAll();
+</script>
+</body>
+</html>
